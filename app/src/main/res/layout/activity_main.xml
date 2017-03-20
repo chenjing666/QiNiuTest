@@ -30,4 +30,11 @@
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
         android:text="图片上传" />
+    <Button
+        android:id="@+id/button_putvideo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/button_putpicture"
+        android:layout_centerHorizontal="true"
+        android:text="视频上传" />
 </RelativeLayout>

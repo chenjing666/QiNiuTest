@@ -2,11 +2,9 @@ package com.biaoke.qiniutest;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.database.Cursor;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -37,7 +35,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class PhotoActivity extends AppCompatActivity {
+public class VideoActivity extends AppCompatActivity {
     private static final int REQUEST_CODE = 8090;
     private Button button1;
     private Button button2;
@@ -49,7 +47,9 @@ public class PhotoActivity extends AppCompatActivity {
     public static final int RESULT_LOAD_IMAGE = 1;
     private volatile boolean isCancelled = false;
     UploadManager uploadManager;
-    public PhotoActivity() {
+    String videopath=null;
+
+    public VideoActivity() {
         //断点上传
         String dirPath = "/storage/emulated/0/Download";
         Recorder recorder = null;
@@ -112,10 +112,11 @@ public class PhotoActivity extends AppCompatActivity {
         // 实例化一个上传的实例
         uploadManager = new UploadManager(config);
     }
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_photo);
+        setContentView(R.layout.activity_video);
         button1 = (Button) findViewById(R.id.bt1);
         button2 = (Button) findViewById(R.id.bt2);
         button3 = (Button) findViewById(R.id.bt3);
@@ -125,14 +126,11 @@ public class PhotoActivity extends AppCompatActivity {
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(
-                        Intent.ACTION_PICK,
-                        android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(i, RESULT_LOAD_IMAGE);
-//                selectUploadFile(v);
+                selectUploadFile(v);
             }
         });
     }
+
     public void selectUploadFile(View view) {
         Intent target = FileUtils.createGetContentIntent();
         Intent intent = Intent.createChooser(target,
@@ -145,80 +143,68 @@ public class PhotoActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == RESULT_LOAD_IMAGE && resultCode == RESULT_OK
-                && data != null) {
-            Uri selectedImage = data.getData();
-            String[] filePathColumn = { MediaStore.Images.Media.DATA };
-
-            Cursor cursor = getContentResolver().query(selectedImage,
-                    filePathColumn, null, null, null);
-            cursor.moveToFirst();
-
-            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-            final String picturePath = cursor.getString(columnIndex);
-            Log.d("PICTUREPATH", picturePath);
-            cursor.close();
-
-            imageview.setVisibility(View.VISIBLE);
-            imageview.setImageBitmap(BitmapFactory.decodeFile(picturePath));
-
-            //自定义参数returnbody
-            //"returnBody":"{\"key\":$(key),\"hash\":$(etag),\"fname\":$(fname),\"phone\":$(x:phone)}
-            final String token = getIntent().getStringExtra("uptoken");
-            Log.d("aaaaaaaaaaaaaaaaaaa",token);
-            button2.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                    //设定需要添加的自定义变量为Map<String, String>类型 并且放到UploadOptions第一个参数里面
-                    HashMap<String, String> map = new HashMap<String, String>();
-                    map.put("x:phone", "12345678");
-
-                    Log.d("qiniu", "click upload");
-                    isCancelled = false;
-                    uploadManager.put(picturePath, null, token,
-                            new UpCompletionHandler() {
-                                public void complete(String key,ResponseInfo info, JSONObject res) {
-                                    Log.i("qiniu", key + ",\r\n " + info + ",\r\n " + res);
-                                    if(info.isOK()){
-                                        textview.setText(res.toString());
-                                    }
-                                }
-                            }, new UploadOptions(map, null, false,
-                                    new UpProgressHandler() {
-                                        public void progress(String key, double percent){
-                                            Log.i("qiniu", key + ": " + percent);
-                                            progressbar.setVisibility(View.VISIBLE);
-                                            int progress = (int)(percent*1000);
-//                                          Log.d("qiniu", progress+"");
-                                            progressbar.setProgress(progress);
-                                            if(progress==1000){
-                                                progressbar.setVisibility(View.GONE);
-                                            }
-                                        }
-
-                                    }, new UpCancellationSignal(){
-                                @Override
-                                public boolean isCancelled() {
-                                    return isCancelled;
-                                }
-                            }));
+        switch (requestCode) {
+            case REQUEST_CODE:
+                if (resultCode == RESULT_OK) {
+                    if (data != null) {
+                        // Get the URI of the selected file
+                        final Uri uri = data.getData();
+                        // Get the file path from the URI
+                        videopath = FileUtils.getPath(this, uri);
+                        Log.d("pathpath---------",videopath);
+                    }
                 }
-            });
 
-            button3.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    isCancelled = true;
-//                    progressbar.setVisibility(View.GONE);
-                }
-            });
+                break;
         }
+        super.onActivityResult(requestCode, resultCode, data);
+        final String token = getIntent().getStringExtra("uptoken");
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+                //设定需要添加的自定义变量为Map<String, String>类型 并且放到UploadOptions第一个参数里面
+                HashMap<String, String> map = new HashMap<String, String>();
+                map.put("x:phone", "12345678");
 
+                Log.d("qiniu", "click upload");
+                isCancelled = false;
+                uploadManager.put(videopath, null, token,
+                        new UpCompletionHandler() {
+                            public void complete(String key, ResponseInfo info, JSONObject res) {
+                                Log.i("qiniu", key + ",\r\n " + info + ",\r\n " + res);
+                                if(info.isOK()){
+                                    textview.setText(res.toString());
+                                }
+                            }
+                        }, new UploadOptions(map, null, false,
+                                new UpProgressHandler() {
+                                    public void progress(String key, double percent){
+                                        Log.i("qiniu", key + ": " + percent);
+                                        progressbar.setVisibility(View.VISIBLE);
+                                        int progress = (int)(percent*1000);
+//                                          Log.d("qiniu", progress+"");
+                                        progressbar.setProgress(progress);
+                                        if(progress==1000){
+                                            progressbar.setVisibility(View.GONE);
+                                        }
+                                    }
+
+                                }, new UpCancellationSignal(){
+                            @Override
+                            public boolean isCancelled() {
+                                return isCancelled;
+                            }
+                        }));
+            }
+        });
+
+        button3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                isCancelled = true;
+            }
+        });
     }
-
 
 }

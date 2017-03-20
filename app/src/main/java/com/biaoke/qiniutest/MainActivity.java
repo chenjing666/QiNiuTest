@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //指定upToken, 强烈建议从服务端提供get请求获取, 这里为了掩饰直接指定key
     public String uptoken = null;
     private String url = "http://172.16.1.144/BK/qiniu-sdk-7.1.3/examples/token.php";
-    private Button btnUpload, btn_putpicture;
+    private Button btnUpload, btn_putpicture,btn_video;
     private EditText textView;
     private UploadManager uploadManager;
 
@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnUpload.setOnClickListener(this);
         btn_putpicture = (Button) findViewById(R.id.button_putpicture);
         btn_putpicture.setOnClickListener(this);
+        btn_video = (Button) findViewById(R.id.button_putvideo);
+        btn_video.setOnClickListener(this);
         uploadManager = new UploadManager(config);
         //new一个uploadManager类
 
@@ -123,6 +125,11 @@ Configuration config = new Configuration.Builder()
                 Intent intent=new Intent(this, PhotoActivity.class);
                 intent.putExtra("uptoken",uptoken);
                 startActivity(intent);
+                break;
+            case R.id.button_putvideo:
+                Intent intent_video=new Intent(this, VideoActivity.class);
+                intent_video.putExtra("uptoken",uptoken);
+                startActivity(intent_video);
                 break;
         }
     }
