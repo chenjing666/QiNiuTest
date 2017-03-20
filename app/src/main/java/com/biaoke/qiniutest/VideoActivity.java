@@ -4,6 +4,8 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -42,7 +44,7 @@ public class VideoActivity extends AppCompatActivity {
     private Button button3;
     private ImageView imageview;
     private Uri imageUri;
-    private TextView textview;
+    private TextView textview,tv_path;
     private ProgressBar progressbar;
     public static final int RESULT_LOAD_IMAGE = 1;
     private volatile boolean isCancelled = false;
@@ -122,6 +124,7 @@ public class VideoActivity extends AppCompatActivity {
         button3 = (Button) findViewById(R.id.bt3);
         imageview = (ImageView) findViewById(R.id.iv);
         textview = (TextView) findViewById(R.id.tv);
+        tv_path= (TextView) findViewById(R.id.tv_path);
         progressbar = (ProgressBar) findViewById(R.id.pb);
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -130,6 +133,15 @@ public class VideoActivity extends AppCompatActivity {
             }
         });
     }
+    private Handler mhandler=new Handler() {
+        public void handleMessage(Message message) {
+            switch (message.what) {
+                case 1:
+                    tv_path.setText(videopath);
+                    break;
+            }
+        }
+    };
 
     public void selectUploadFile(View view) {
         Intent target = FileUtils.createGetContentIntent();
@@ -151,6 +163,9 @@ public class VideoActivity extends AppCompatActivity {
                         final Uri uri = data.getData();
                         // Get the file path from the URI
                         videopath = FileUtils.getPath(this, uri);
+                        Message message=new Message();
+                        message.what = 1;
+                        mhandler.sendMessage(message);
                         Log.d("pathpath---------",videopath);
                     }
                 }
